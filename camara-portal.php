@@ -3,7 +3,7 @@
  * Plugin Name: Portal de Trámites - Cámara de Empresarios del Combustible
  * Plugin URI: https://empresariosdelcombustible.com
  * Description: Portal profesional de solicitud y seguimiento de trámites para asociados de la Cámara
- * Version: 1.0.0
+ * Version: 1.0.2
  * Author: Cámara de Empresarios del Combustible
  * Author URI: https://empresariosdelcombustible.com
  * License: GPL v2 or later
@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Definir constantes del plugin
-define('CAMARA_PORTAL_VERSION', '1.0.0');
+define('CAMARA_PORTAL_VERSION', '1.0.2');
 define('CAMARA_PORTAL_PATH', plugin_dir_path(__FILE__));
 define('CAMARA_PORTAL_URL', plugin_dir_url(__FILE__));
 define('CAMARA_PORTAL_ASSETS', CAMARA_PORTAL_URL . 'assets/');

@@ -5,12 +5,6 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-require_once CAMARA_PORTAL_PATH . 'includes/class-page-template.php';
-
-if (!defined('ABSPATH')) {
-    exit;
-}
-
 class Plugin {
     private static $instance = null;
 
@@ -30,7 +24,6 @@ class Plugin {
         require_once CAMARA_PORTAL_PATH . 'includes/class-database.php';
         require_once CAMARA_PORTAL_PATH . 'includes/class-rest-api.php';
         require_once CAMARA_PORTAL_PATH . 'includes/class-template.php';
-        require_once CAMARA_PORTAL_PATH . 'includes/class-page-template.php';
     }
 
     private function hooks() {
@@ -40,16 +33,14 @@ class Plugin {
         add_action('plugins_loaded', [$this, 'init']);
         add_action('wp_enqueue_scripts', [$this, 'enqueue_assets']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
-        add_action('init', [$this, 'hide_admin_bar_portal']);
-
         add_filter('show_admin_bar', [$this, 'hide_admin_bar']);
         add_action('admin_menu', [$this, 'add_admin_menu']);
         add_action('rest_api_init', [$this, 'register_rest_routes']);
+        add_shortcode('camara_portal', [$this, 'render_portal_shortcode']);
     }
 
     public function activate() {
         Database::create_tables();
-        $this->create_portal_page();
         flush_rewrite_rules();
     }
 
@@ -62,7 +53,8 @@ class Plugin {
     }
 
     public function enqueue_assets() {
-        if (!is_page('portal')) {
+        // Solo cargar en páginas con el shortcode
+        if (!$this->has_portal_shortcode()) {
             return;
         }
 
@@ -104,12 +96,6 @@ class Plugin {
             [],
             CAMARA_PORTAL_VERSION
         );
-    }
-
-    public function hide_admin_bar_portal() {
-        if (is_page('portal')) {
-            show_admin_bar(false);
-        }
     }
 
     public function add_admin_menu() {
@@ -155,7 +141,7 @@ class Plugin {
     }
 
     public function hide_admin_bar($show) {
-        if (is_page('portal') && !current_user_can('manage_options')) {
+        if (!current_user_can('manage_options')) {
             return false;
         }
         return $show;
@@ -165,18 +151,30 @@ class Plugin {
         RestAPI::register_routes();
     }
 
-    private function create_portal_page() {
-        $existing = get_page_by_path('portal');
-        if ($existing) {
-            return;
+    public function render_portal_shortcode() {
+        if (!is_user_logged_in()) {
+            return $this->render_login_form();
         }
+        return $this->render_portal_content();
+    }
 
-        wp_insert_post([
-            'post_title' => 'Portal de Trámites',
-            'post_content' => 'Página del Portal - No editar',
-            'post_status' => 'publish',
-            'post_type' => 'page',
-            'post_name' => 'portal',
-        ]);
+    private function render_login_form() {
+        ob_start();
+        include CAMARA_PORTAL_PATH . 'templates/portal-login.php';
+        return ob_get_clean();
+    }
+
+    private function render_portal_content() {
+        ob_start();
+        include CAMARA_PORTAL_PATH . 'templates/portal-content.php';
+        return ob_get_clean();
+    }
+
+    private function has_portal_shortcode() {
+        global $post;
+        if (!$post) {
+            return false;
+        }
+        return has_shortcode($post->post_content, 'camara_portal');
     }
 }
